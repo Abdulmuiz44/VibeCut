@@ -25,7 +25,7 @@ export function AiPromptPanel({ onApply, projectId, sequenceId }: { onApply: (op
       <div className="mt-4 space-y-2 text-sm">
         {proposals.map((proposal, idx) => (
           <div key={idx} className="rounded-xl border border-slate-700 bg-slate-950/60 p-2">
-            <p className="text-slate-200">{proposal.operationType}</p>
+            <p className="text-slate-200">{String(proposal.operationType)}</p>
             <button className="btn-ghost mt-2 px-3 py-1" onClick={() => onApply(proposal)}>
               Apply
             </button>
