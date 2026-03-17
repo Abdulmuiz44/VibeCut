@@ -1,0 +1,1 @@
+-- Optional local seed: create sample project by logged-in user in UI.
