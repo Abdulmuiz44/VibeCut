@@ -4,6 +4,8 @@ import { requireUser } from '@/lib/auth/session';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { inngest } from '@/lib/inngest/client';
 
+const SOURCE_BUCKET = 'source-videos';
+
 export async function POST(request: NextRequest) {
   const { user } = await requireUser();
   const input = createUploadSchema.parse(await request.json());
@@ -16,8 +18,14 @@ export async function POST(request: NextRequest) {
     .select('id')
     .single();
 
-  const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable`;
-  return NextResponse.json({ uploadUrl, assetId: asset?.id, storagePath });
+  const uploadEndpoint = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable`;
+  return NextResponse.json({
+    uploadEndpoint,
+    bucketName: SOURCE_BUCKET,
+    objectName: storagePath,
+    assetId: asset?.id,
+    storagePath
+  });
 }
 
 export async function PUT(request: NextRequest) {

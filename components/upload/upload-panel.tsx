@@ -15,20 +15,51 @@ export function UploadPanel({ projectId }: { projectId: string }) {
       return;
     }
 
-    const createRes = await fetch('/api/uploads/create', {
+    const createRes = await fetch('/api/uploads', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projectId, fileName: file.name, mimeType: file.type, sizeBytes: file.size })
     });
-    const { uploadUrl, assetId } = await createRes.json();
+
+    if (!createRes.ok) {
+      const errorText = await createRes.text();
+      setMessage(`Upload init failed: ${errorText}`);
+      return;
+    }
+
+    const { uploadEndpoint, bucketName, objectName, assetId } = await createRes.json();
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!anonKey) {
+      setMessage('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      return;
+    }
 
     const upload = new tus.Upload(file, {
-      uploadUrl,
+      endpoint: uploadEndpoint,
       retryDelays: [0, 1000, 3000, 5000],
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      headers: {
+        authorization: `Bearer ${anonKey}`,
+        apikey: anonKey,
+        'x-upsert': 'true'
+      },
+      metadata: {
+        bucketName,
+        objectName,
+        contentType: file.type,
+        cacheControl: '3600'
+      },
       onError: (error) => setMessage(`Upload failed: ${error.message}`),
       onProgress: (uploaded, total) => setProgress(Math.round((uploaded / total) * 100)),
       onSuccess: async () => {
         setMessage('Upload complete. Transcription starting...');
-        await fetch('/api/uploads/create', { method: 'PUT', body: JSON.stringify({ projectId, assetId }) });
+        await fetch('/api/uploads', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, assetId })
+        });
         location.reload();
       }
     });
@@ -48,3 +79,4 @@ export function UploadPanel({ projectId }: { projectId: string }) {
     </section>
   );
 }
+
