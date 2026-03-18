@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/auth/session';
 
 export default async function ExportPage({ params }: { params: Promise<{ projectId: string; exportId: string }> }) {
   const { exportId, projectId } = await params;
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.from('exports').select('*').eq('id', exportId).single();
+  const { supabase, user } = await requireUser();
+  const { data } = await supabase.from('exports').select('*').eq('id', exportId).eq('user_id', user.id).single();
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">

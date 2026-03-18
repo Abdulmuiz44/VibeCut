@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/session';
-import { proposeOperations } from '@/lib/openai/propose-operations';
+import { proposeOperations } from '@/lib/mistral/propose-operations';
 
 export async function POST(request: NextRequest) {
   const { supabase, user } = await requireUser();
@@ -15,3 +15,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'AI proposal failed' }, { status: 400 });
   }
 }
+

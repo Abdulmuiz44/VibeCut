@@ -3,11 +3,11 @@ import Link from 'next/link';
 export default function MarketingPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center gap-8 px-6">
-      <span className="w-fit rounded-full border border-blue-400/40 bg-blue-500/10 px-3 py-1 text-xs text-blue-300">Transcript-first AI editor</span>
+      <span className="w-fit rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">Transcript-first AI editor</span>
       <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">VibeCut</h1>
       <p className="max-w-2xl text-lg text-slate-300">Edit videos by transcript and prompt, then export polished social-ready videos fast.</p>
       <div className="flex gap-3">
-        <Link href="/sign-in" className="btn-primary">Sign in</Link>
+        <Link href="/sign-in" className="btn-primary">Continue with Google</Link>
         <Link href="/dashboard" className="btn-ghost">Go to dashboard</Link>
       </div>
     </main>

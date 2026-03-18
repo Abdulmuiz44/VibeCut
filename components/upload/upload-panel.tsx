@@ -42,7 +42,7 @@ export function UploadPanel({ projectId }: { projectId: string }) {
       <p className="muted mt-2">Resumable TUS upload with automatic transcription.</p>
       <input className="soft-input mt-6" type="file" accept="video/mp4,video/quicktime,video/webm" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
       <div className="mt-4 h-2 rounded bg-slate-800">
-        <div className="h-full rounded bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
+        <div className="h-full rounded bg-emerald-400 transition-all" style={{ width: `${progress}%` }} />
       </div>
       <p className="muted mt-3">{message}</p>
     </section>
