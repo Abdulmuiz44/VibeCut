@@ -21,6 +21,7 @@
     "inngest": "^3.31.10",
     "lucide-react": "^0.468.0",
     "next": "15.0.4",
+    "next-auth": "^5.0.0-beta.30",
     "openai": "^4.73.0",
     "react": "19.0.0-rc-65a56d0e-20241020",
     "react-dom": "19.0.0-rc-65a56d0e-20241020",
