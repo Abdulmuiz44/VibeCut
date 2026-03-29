@@ -13,8 +13,10 @@ VibeCut is a browser-based AI vibe video editor for talking-head and social cont
 ## Setup
 1. `pnpm install`
 2. Copy `.env.example` -> `.env.local`
+   - Ensure `AUTH_TRUST_HOST=true` for proxy/hosted platforms (e.g. Netlify) to avoid NextAuth host validation errors.
 3. Create Supabase project and run migration in `supabase/migrations/202603160001_init.sql`
 4. Configure auth redirect URL to `http://localhost:3000/dashboard`
+   - For Google OAuth callback, also add `http://localhost:3000/api/auth/callback/google` (and your production domain equivalent, e.g. `https://your-domain/api/auth/callback/google`).
 5. Configure Inngest route at `/api/inngest`
 6. Add Mistral API key (MISTRAL_API_KEY). Optional: set MISTRAL_EDIT_MODEL and MISTRAL_TRANSCRIBE_MODEL.
 
@@ -50,5 +52,3 @@ pnpm test:e2e
 - Local renderer adapter is currently a placeholder wrapper for `renderMedia` integration in your infra runtime.
 - TUS upload endpoint points at Supabase resumable endpoint and expects standard Supabase auth setup.
 - Transcription function is scaffolded and requires file fetch/stream wiring for production.
-
-
