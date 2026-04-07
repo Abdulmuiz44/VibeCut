@@ -6,7 +6,6 @@ import { Player, type PlayerRef } from '@remotion/player';
 import { VibeCutComposition } from '@/remotion/compositions/VibeCutComposition';
 import { deriveSequence, SequenceSegment } from '@/lib/edits/derive-sequence';
 import type { EditOperationInput } from '@/lib/validation/operations';
-import { AiPromptPanel } from '@/components/ai/ai-prompt-panel';
 import { TimelineEditor, type TimelineTranscriptSegment } from '@/components/editor/timeline-editor';
 
 type Project = { id: string; title: string };

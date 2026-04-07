@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/session';
 import {
   createLemonSqueezyCustomer,
@@ -8,7 +8,7 @@ import {
 } from '@/lib/billing/lemonsqueezy';
 import { getBillingAccount } from '@/lib/billing/account';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   const { supabase, user } = await requireUser();
   const billing = await getBillingAccount(supabase, user.id);
   let customerId = billing?.lemonsqueezy_customer_id ?? null;
