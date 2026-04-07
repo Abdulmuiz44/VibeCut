@@ -2,6 +2,9 @@ import { notFound } from 'next/navigation';
 import { UploadPanel } from '@/components/upload/upload-panel';
 import { EditorShell } from '@/components/editor/editor-shell';
 import { requireUser } from '@/lib/auth/session';
+import { DuplicateProjectButton } from '@/components/dashboard/duplicate-project-button';
+import { BillingActions } from '@/components/billing/billing-actions';
+import { billingPlanLabel, getBillingAccount, isBillingActive } from '@/lib/billing/account';
 
 export default async function ProjectEditorPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
@@ -10,14 +13,21 @@ export default async function ProjectEditorPage({ params }: { params: Promise<{ 
   const { data: project } = await supabase.from('projects').select('*').eq('id', projectId).eq('user_id', user.id).single();
   if (!project) notFound();
 
-  const { data: sequence } = await supabase.from('sequences').select('*, sequence_segments(*)').eq('id', project.active_sequence_id).maybeSingle();
-  const { data: transcriptSegments } = await supabase
-    .from('transcript_segments')
-    .select('*')
-    .eq('transcript_id', project.active_transcript_id)
-    .order('segment_index', { ascending: true });
+  const { data: sequence } = project.active_sequence_id ? await supabase.from('sequences').select('*, sequence_segments(*)').eq('id', project.active_sequence_id).maybeSingle() : { data: null };
+  const { data: transcriptSegments } = project.active_transcript_id
+    ? await supabase.from('transcript_segments').select('*').eq('transcript_id', project.active_transcript_id).order('segment_index', { ascending: true })
+    : { data: [] };
+  const { data: operations } = await supabase.from('edit_operations').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
+  const { data: snapshots } = await supabase.from('sequence_snapshots').select('*').eq('project_id', projectId).eq('user_id', user.id).order('created_at', { ascending: false });
+  const { data: exports } = await supabase.from('exports').select('*').eq('project_id', projectId).eq('user_id', user.id).order('created_at', { ascending: false }).limit(8);
+  const billing = await getBillingAccount(supabase, user.id);
 
   const isDraft = project.status === 'draft';
+  const recentOperations = operations ?? [];
+  const recentSnapshots = snapshots ?? [];
+  const recentExports = exports ?? [];
+  const transcriptRows = transcriptSegments ?? [];
+  const billingActive = isBillingActive(billing);
 
   return (
     <main className="page-shell py-6 lg:py-8">
@@ -54,6 +64,17 @@ export default async function ProjectEditorPage({ params }: { params: Promise<{ 
                 <span className="text-slate-200">{transcriptSegments?.length ?? 0}</span>
               </div>
             </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <DuplicateProjectButton projectId={project.id} projectTitle={project.title} />
+            </div>
+            <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Billing</p>
+              <p className="mt-2 text-sm text-slate-200">{billingActive ? 'Subscription active' : 'Billing inactive'}</p>
+              <p className="mt-1 text-xs text-slate-400">{billingPlanLabel(billing)}</p>
+              <div className="mt-3">
+                <BillingActions active={billingActive} planLabel={billingPlanLabel(billing)} />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -71,7 +92,14 @@ export default async function ProjectEditorPage({ params }: { params: Promise<{ 
             </div>
           ) : sequence ? (
             <div className="min-h-0 rounded-[2rem] border border-slate-800 bg-slate-950/40 p-3 shadow-2xl shadow-black/20">
-              <EditorShell project={project} sequence={sequence} transcriptSegments={transcriptSegments ?? []} />
+              <EditorShell
+                project={project}
+                sequence={sequence}
+                transcriptSegments={transcriptRows}
+                initialOperations={recentOperations}
+                snapshots={recentSnapshots}
+                exports={recentExports}
+              />
             </div>
           ) : (
             <div className="surface-card flex min-h-[420px] flex-col items-start justify-center p-8">

@@ -11,6 +11,14 @@ describe('operation schema', () => {
   test('rejects unknown operation', () => {
     expect(() => editOperationSchema.parse({ operationType: 'DROP_TABLE', payload: {} })).toThrow();
   });
+
+  test('accepts trim segment payload', () => {
+    const parsed = editOperationSchema.parse({
+      operationType: 'TRIM_SEGMENT',
+      payload: { segmentId: '11111111-1111-1111-1111-111111111111', trimSide: 'end', newTimeMs: 2400 }
+    });
+    expect(parsed.operationType).toBe('TRIM_SEGMENT');
+  });
 });
 
 describe('heuristic edits', () => {
@@ -30,5 +38,13 @@ describe('heuristic edits', () => {
   test('cuts sequence with operation log', () => {
     const out = deriveSequence([{ id: 'seg', text: 'hello', start_ms: 0, end_ms: 1000, include_in_export: true }], [{ operationType: 'CUT_SEGMENT', payload: { segmentId: 'seg' } }]);
     expect(out[0].include_in_export).toBe(false);
+  });
+
+  test('trims a segment end time', () => {
+    const out = deriveSequence(
+      [{ id: 'seg', text: 'hello', start_ms: 0, end_ms: 3000, include_in_export: true }],
+      [{ operationType: 'TRIM_SEGMENT', payload: { segmentId: 'seg', trimSide: 'end', newTimeMs: 1800 } }]
+    );
+    expect(out[0].end_ms).toBe(1800);
   });
 });
