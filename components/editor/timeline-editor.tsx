@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Pause, Play, RotateCcw, Scissors, SkipBack, SkipForward } from 'lucide-react';
 import type { SequenceSegment } from '@/lib/edits/derive-sequence';
 
@@ -109,12 +109,12 @@ export function TimelineEditor({
     [durationMs, sequenceSegments, transcriptSegments]
   );
 
-  const msFromClientX = (clientX: number) => {
+  const msFromClientX = useCallback((clientX: number) => {
     const rect = railRef.current?.getBoundingClientRect();
     if (!rect) return 0;
     const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
     return Math.round(ratio * durationMs);
-  };
+  }, [durationMs]);
 
   const beginTrim = (segmentId: string, trimSide: 'start' | 'end', event: ReactPointerEvent<HTMLButtonElement>, initialMs: number) => {
     event.preventDefault();
@@ -144,7 +144,7 @@ export function TimelineEditor({
     return () => {
       window.removeEventListener('pointermove', moveHandler);
     };
-  }, [activeTrim, durationMs, onTrimSegment]);
+  }, [activeTrim, msFromClientX, onTrimSegment]);
 
   return (
     <div className="glass-card flex min-h-0 flex-col gap-4 p-4">

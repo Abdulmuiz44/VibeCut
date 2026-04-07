@@ -1,17 +1,5 @@
 import { transcribeFromUrl } from '@/lib/transcript/transcribe';
-
-type SupabaseAdminClient = {
-  from: (table: string) => {
-    select: (columns: string) => any;
-    insert: (values: Record<string, unknown> | Record<string, unknown>[]) => any;
-    update: (values: Record<string, unknown>) => any;
-  };
-  storage: {
-    from: (bucket: string) => {
-      download: (path: string) => Promise<{ data: Blob | null; error: Error | null }>;
-    };
-  };
-};
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 type AssetRecord = {
   id: string;
@@ -19,14 +7,6 @@ type AssetRecord = {
   mime_type: string;
   size_bytes: number;
   duration_ms: number | null;
-};
-
-type ProjectRecord = {
-  id: string;
-  title: string;
-  user_id: string;
-  active_transcript_id: string | null;
-  active_sequence_id: string | null;
 };
 
 type TranscriptSourceSegment = {
@@ -104,7 +84,7 @@ export async function ensureEditorWorkspace({
   projectId,
   assetId
 }: {
-  supabase: SupabaseAdminClient;
+  supabase: Pick<SupabaseClient, 'from' | 'storage'>;
   projectId: string;
   assetId: string;
 }) {
@@ -155,7 +135,7 @@ export async function ensureEditorWorkspace({
   const { data: transcript, error: transcriptError } = await supabase
     .from('transcripts')
     .insert({
-    user_id: project.user_id,
+      user_id: project.user_id,
       project_id: projectId,
       asset_id: assetId,
       provider: transcriptPayload ? 'mistral' : 'fallback',
