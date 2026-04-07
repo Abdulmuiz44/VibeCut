@@ -20,6 +20,18 @@ export function deriveSequence(baseSegments: SequenceSegment[], operations: Edit
       const target = next.find((segment) => segment.id === op.payload.segmentId);
       if (target) target.include_in_export = true;
     }
+    if (op.operationType === 'TRIM_SEGMENT') {
+      const target = next.find((segment) => segment.id === op.payload.segmentId);
+      if (target) {
+        const minDuration = 100;
+        if (op.payload.trimSide === 'start') {
+          target.start_ms = Math.min(Math.max(0, op.payload.newTimeMs), Math.max(0, target.end_ms - minDuration));
+        }
+        if (op.payload.trimSide === 'end') {
+          target.end_ms = Math.max(target.start_ms + minDuration, op.payload.newTimeMs);
+        }
+      }
+    }
     if (op.operationType === 'TIGHTEN_PACING') {
       let cursor = 0;
       for (const segment of next.filter((s) => s.include_in_export)) {

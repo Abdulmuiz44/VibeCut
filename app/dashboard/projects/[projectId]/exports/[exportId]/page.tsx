@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
+import { ExportActions } from '@/components/export/export-actions';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export default async function ExportPage({ params }: { params: Promise<{ projectId: string; exportId: string }> }) {
   const { exportId, projectId } = await params;
@@ -11,6 +13,12 @@ export default async function ExportPage({ params }: { params: Promise<{ project
 
   const progress = Math.max(0, Math.min(100, Math.round((exportRow.progress ?? 0) * 100)));
   const statusLabel = exportRow.status ? exportRow.status.replaceAll('_', ' ') : 'unknown';
+  const admin = getSupabaseAdmin();
+  const { data: signedDownload } =
+    exportRow.output_storage_path
+      ? await admin.storage.from('source-videos').createSignedUrl(exportRow.output_storage_path, 60 * 60)
+      : { data: null };
+  const outputUrl = exportRow.output_url ?? signedDownload?.signedUrl ?? null;
 
   return (
     <main className="page-shell py-10 lg:py-14">
@@ -41,11 +49,16 @@ export default async function ExportPage({ params }: { params: Promise<{ project
               <p className="text-sm text-slate-400">Progress updates in real time while the render is running.</p>
             </div>
 
-            {exportRow.output_url ? (
-              <a className="btn-primary mt-6 inline-flex" href={exportRow.output_url} target="_blank" rel="noreferrer">
-                Download MP4
-              </a>
-            ) : null}
+            <div className="mt-6">
+              <ExportActions
+                exportId={exportRow.id}
+                projectId={projectId}
+                sequenceId={exportRow.sequence_id}
+                preset={exportRow.preset}
+                outputUrl={outputUrl}
+                canRetry={exportRow.status === 'failed'}
+              />
+            </div>
           </section>
 
           <section className="glass-card p-6">

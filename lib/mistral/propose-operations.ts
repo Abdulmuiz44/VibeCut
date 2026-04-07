@@ -34,7 +34,11 @@ export async function proposeOperations(prompt: string, context: string) {
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: 'Convert user intent into safe edit operations JSON: {"operations": EditOperation[]}. Return only JSON.' },
+        {
+          role: 'system',
+          content:
+            'Convert user intent into safe edit operations JSON: {"operations": EditOperation[]}. Prefer CUT_SEGMENT, RESTORE_SEGMENT, TRIM_SEGMENT, TIGHTEN_PACING, REMOVE_SILENCE, SET_ASPECT_RATIO, and SET_CAPTION_THEME. Return only JSON.'
+        },
         { role: 'user', content: `Context: ${context}\nPrompt: ${prompt}` }
       ]
     })

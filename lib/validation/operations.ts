@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const operationTypeSchema = z.enum([
   'CUT_SEGMENT',
   'RESTORE_SEGMENT',
+  'TRIM_SEGMENT',
   'REMOVE_SILENCE',
   'REMOVE_FILLER_WORDS',
   'TIGHTEN_PACING',
@@ -23,6 +24,16 @@ const cutSegmentOperationSchema = z.object({
 const restoreSegmentOperationSchema = z.object({
   operationType: z.literal('RESTORE_SEGMENT'),
   payload: z.object({ segmentId: z.string().uuid() }),
+  summary: z.string().optional()
+});
+
+const trimSegmentOperationSchema = z.object({
+  operationType: z.literal('TRIM_SEGMENT'),
+  payload: z.object({
+    segmentId: z.string().uuid(),
+    trimSide: z.enum(['start', 'end']),
+    newTimeMs: z.number().int().min(0)
+  }),
   summary: z.string().optional()
 });
 
@@ -83,6 +94,7 @@ const updateSequenceSettingsOperationSchema = z.object({
 export const editOperationSchema = z.discriminatedUnion('operationType', [
   cutSegmentOperationSchema,
   restoreSegmentOperationSchema,
+  trimSegmentOperationSchema,
   removeSilenceOperationSchema,
   removeFillerWordsOperationSchema,
   tightenPacingOperationSchema,
