@@ -1,14 +1,13 @@
 import { notFound } from 'next/navigation';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { UploadPanel } from '@/components/upload/upload-panel';
 import { EditorShell } from '@/components/editor/editor-shell';
+import { requireUser } from '@/lib/auth/session';
 
 export default async function ProjectEditorPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
-  const { data: project } = await supabase.from('projects').select('*').eq('id', projectId).eq('user_id', user?.id).single();
+  const { data: project } = await supabase.from('projects').select('*').eq('id', projectId).eq('user_id', user.id).single();
   if (!project) notFound();
 
   const { data: sequence } = await supabase.from('sequences').select('*, sequence_segments(*)').eq('id', project.active_sequence_id).single();

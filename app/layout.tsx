@@ -1,13 +1,11 @@
 import './globals.css';
 import { ReactNode } from 'react';
 
-const brand = process.env.NEXT_PUBLIC_UI_BRAND === 'chatgpt' ? 'chatgpt' : 'perplexity';
-
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark" data-brand={brand}>
+    <html lang="en" className="dark">
       <body>
-        <div className="top-glow pointer-events-none fixed inset-0" />
+        <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(to_bottom,rgba(62,207,142,0.08),transparent_130px)]" />
         <div className="relative">{children}</div>
       </body>
     </html>

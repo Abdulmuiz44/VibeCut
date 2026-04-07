@@ -46,7 +46,7 @@ export function EditorShell({ project, sequence, transcriptSegments }: { project
       <header className="glass-card flex items-center justify-between px-4 py-3">
         <div>
           <h1 className="font-semibold tracking-tight">{project.title}</h1>
-          <p className="muted text-xs">Auto-saved edit operations</p>
+          <p className="text-xs text-slate-400">Auto-saved edit operations</p>
         </div>
         <button
           className="btn-primary"
@@ -75,8 +75,8 @@ export function EditorShell({ project, sequence, transcriptSegments }: { project
             <h3 className="mb-2 font-medium">Transcript</h3>
             <div className="max-h-40 space-y-2 overflow-y-auto text-sm">
               {transcriptSegments.map((segment) => (
-                <div key={segment.id} className="flex items-start justify-between panel-soft rounded-xl p-2">
-                  <button className="text-left text-brand" onClick={() => applyOperation({ operationType: 'CUT_SEGMENT', payload: { segmentId: segment.id }, summary: 'Manual cut from transcript' })}>{segment.text}</button>
+                <div key={segment.id} className="flex items-start justify-between rounded-xl border border-slate-700 bg-slate-950/60 p-2">
+                  <button className="text-left text-slate-200" onClick={() => applyOperation({ operationType: 'CUT_SEGMENT', payload: { segmentId: segment.id }, summary: 'Manual cut from transcript' })}>{segment.text}</button>
                   <button className="btn-ghost px-2 py-1" onClick={() => applyOperation({ operationType: 'RESTORE_SEGMENT', payload: { segmentId: segment.id } })}>Restore</button>
                 </div>
               ))}

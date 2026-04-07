@@ -6,7 +6,7 @@ VibeCut is a browser-based AI vibe video editor for talking-head and social cont
 - Next.js App Router + TypeScript + Tailwind
 - Supabase Auth/Postgres/Storage (RLS)
 - Inngest background jobs
-- OpenAI for transcription + prompt parsing
+- Mistral AI for transcription + prompt parsing
 - Remotion Player + renderer abstraction
 - Zod validation + Vitest + Playwright
 
@@ -16,12 +16,7 @@ VibeCut is a browser-based AI vibe video editor for talking-head and social cont
 3. Create Supabase project and run migration in `supabase/migrations/202603160001_init.sql`
 4. Configure auth redirect URL to `http://localhost:3000/dashboard`
 5. Configure Inngest route at `/api/inngest`
-6. Add OpenAI API key.
-
-
-## UI brand skin
-- `NEXT_PUBLIC_UI_BRAND=perplexity` (default): Perplexity-like blue dark glass theme
-- `NEXT_PUBLIC_UI_BRAND=chatgpt`: ChatGPT-like neutral dark + green accent theme
+6. Add Mistral API key (MISTRAL_API_KEY). Optional: set MISTRAL_EDIT_MODEL and MISTRAL_TRANSCRIBE_MODEL.
 
 ## Local dev
 ```bash
@@ -55,3 +50,5 @@ pnpm test:e2e
 - Local renderer adapter is currently a placeholder wrapper for `renderMedia` integration in your infra runtime.
 - TUS upload endpoint points at Supabase resumable endpoint and expects standard Supabase auth setup.
 - Transcription function is scaffolded and requires file fetch/stream wiring for production.
+
+

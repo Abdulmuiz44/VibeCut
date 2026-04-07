@@ -1,10 +1,22 @@
-import { openai } from '@/lib/openai/client';
+import { getMistralBaseUrl, getMistralHeaders, getMistralTranscriptionModel } from '@/lib/mistral/client';
 
 export async function transcribeFromUrl(file: File) {
-  return openai.audio.transcriptions.create({
-    file,
-    model: 'gpt-4o-mini-transcribe',
-    response_format: 'verbose_json',
-    timestamp_granularities: ['segment', 'word']
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('model', getMistralTranscriptionModel());
+  formData.append('timestamp_granularities', 'segment');
+  formData.append('timestamp_granularities', 'word');
+
+  const response = await fetch(`${getMistralBaseUrl()}/v1/audio/transcriptions`, {
+    method: 'POST',
+    headers: getMistralHeaders(),
+    body: formData
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Mistral transcription failed (${response.status}): ${errorText}`);
+  }
+
+  return response.json();
 }
