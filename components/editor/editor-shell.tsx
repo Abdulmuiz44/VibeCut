@@ -6,6 +6,16 @@ import { Player, type PlayerRef } from '@remotion/player';
 import { VibeCutComposition } from '@/remotion/compositions/VibeCutComposition';
 import { deriveSequence, SequenceSegment } from '@/lib/edits/derive-sequence';
 import type { EditOperationInput } from '@/lib/validation/operations';
+import {
+  createEditorStorageKey,
+  formatExportStatus,
+  formatOperationLabel,
+  isTerminalExportStatus,
+  normalizeOperationEntry,
+  parsePersistedEditorState,
+  type OperationHistoryEntry,
+  type OperationRecordLike
+} from '@/lib/editor/utils';
 import { TimelineEditor, type TimelineTranscriptSegment } from '@/components/editor/timeline-editor';
 
 type Project = { id: string; title: string };
@@ -25,6 +35,10 @@ type ExportRecord = {
   output_url: string | null;
   error_message: string | null;
   created_at: string;
+};
+
+type ApplyOperationResponse = {
+  operation?: OperationRecordLike | null;
 };
 
 const FPS = 30;
@@ -62,13 +76,13 @@ export function EditorShell({
   project: Project;
   sequence: Sequence;
   transcriptSegments: TranscriptSegment[];
-  initialOperations: EditOperationInput[];
+  initialOperations: OperationRecordLike[];
   snapshots: SnapshotRecord[];
   exports: ExportRecord[];
 }) {
   const router = useRouter();
-  const [operations, setOperations] = useState<EditOperationInput[]>(initialOperations);
-  const [redoStack, setRedoStack] = useState<EditOperationInput[]>([]);
+  const [historyEntries, setHistoryEntries] = useState<OperationHistoryEntry[]>(() => initialOperations.map(normalizeOperationEntry));
+  const [redoStack, setRedoStack] = useState<OperationHistoryEntry[]>([]);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef<PlayerRef>(null);
@@ -83,11 +97,25 @@ export function EditorShell({
   const initialExportPreset = (exports[0]?.preset as (typeof EXPORT_PRESETS)[number]['value'] | undefined) ?? 'social_vertical_1080x1920';
   const [exportPreset, setExportPreset] = useState<(typeof EXPORT_PRESETS)[number]['value']>(initialExportPreset);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportItems, setExportItems] = useState(exports);
+  const exportPresetRef = useRef(initialExportPreset);
+  const snapshotLabelRef = useRef('');
+  const hydratedEditorStateRef = useRef(false);
+  const editorStorageKey = useMemo(() => createEditorStorageKey(project.id), [project.id]);
 
   useEffect(() => {
-    setOperations(initialOperations);
+    setHistoryEntries(initialOperations.map(normalizeOperationEntry));
     setRedoStack([]);
   }, [initialOperations]);
+
+  useEffect(() => {
+    setExportItems(exports);
+  }, [exports]);
+
+  const operations = useMemo<EditOperationInput[]>(
+    () => historyEntries.map(({ operationType, payload, summary }) => ({ operationType, payload, summary }) as EditOperationInput),
+    [historyEntries]
+  );
 
   const currentSegments = useMemo(() => deriveSequence(sequence?.sequence_segments ?? [], operations), [sequence, operations]);
   const timelineDurationMs = Math.max(1, ...currentSegments.map((segment) => segment.end_ms), ...transcriptSegments.map((segment) => segment.end_ms));
@@ -106,6 +134,93 @@ export function EditorShell({
     currentSequenceSegmentRef.current = currentSequenceSegment ?? null;
   }, [currentFrame, currentSequenceSegment, currentTimeMs]);
 
+  useEffect(() => {
+    exportPresetRef.current = exportPreset;
+    snapshotLabelRef.current = snapshotLabel;
+  }, [exportPreset, snapshotLabel]);
+
+  useEffect(() => {
+    if (hydratedEditorStateRef.current || typeof window === 'undefined') return;
+
+    const restoredState = parsePersistedEditorState(
+      window.localStorage.getItem(editorStorageKey),
+      EXPORT_PRESETS.map((preset) => preset.value)
+    );
+
+    if (restoredState) {
+      setCurrentFrame(clampFrame(restoredState.currentFrame, durationInFrames));
+      setExportPreset(restoredState.exportPreset as (typeof EXPORT_PRESETS)[number]['value']);
+      setSnapshotLabel(restoredState.snapshotLabel);
+      setSaveState({ kind: 'idle', message: 'Restored your local editor state.' });
+    }
+
+    hydratedEditorStateRef.current = true;
+  }, [durationInFrames, editorStorageKey]);
+
+  useEffect(() => {
+    if (!hydratedEditorStateRef.current || typeof window === 'undefined') return;
+
+    const persist = () => {
+      window.localStorage.setItem(
+        editorStorageKey,
+        JSON.stringify({
+          currentFrame: currentFrameRef.current,
+          exportPreset: exportPresetRef.current,
+          snapshotLabel: snapshotLabelRef.current
+        })
+      );
+    };
+
+    if (!isPlaying) {
+      const timeout = window.setTimeout(persist, 200);
+      return () => window.clearTimeout(timeout);
+    }
+
+    const onBeforeUnload = () => persist();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      persist();
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [currentFrame, editorStorageKey, exportPreset, isPlaying, snapshotLabel]);
+
+  useEffect(() => {
+    const pendingExports = exportItems.filter((item) => !isTerminalExportStatus(item.status));
+    if (!pendingExports.length) return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      const nextRows = await Promise.all(
+        pendingExports.map(async (item) => {
+          try {
+            const response = await fetch(`/api/exports/${item.id}`, { cache: 'no-store' });
+            if (!response.ok) return null;
+            return (await response.json()) as ExportRecord;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (cancelled) return;
+
+      setExportItems((current) =>
+        current.map((item) => nextRows.find((candidate) => candidate?.id === item.id) ?? item)
+      );
+    };
+
+    void poll();
+    const interval = window.setInterval(() => {
+      void poll();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [exportItems]);
+
   const persistOperation = useCallback(
     async (op: EditOperationInput, options?: { preserveRedoStack?: boolean }) => {
       setSaveState({ kind: 'saving', message: 'Saving change...' });
@@ -121,7 +236,10 @@ export function EditorShell({
         throw new Error(errorText || 'Unable to save edit');
       }
 
-      setOperations((prev) => [...prev, op]);
+      const data = (await response.json()) as ApplyOperationResponse;
+      const nextHistoryEntry = data.operation ? normalizeOperationEntry(data.operation) : normalizeOperationEntry(op);
+
+      setHistoryEntries((prev) => [...prev, nextHistoryEntry]);
       if (!options?.preserveRedoStack) {
         setRedoStack([]);
       }
@@ -191,7 +309,7 @@ export function EditorShell({
   }, []);
 
   const undo = useCallback(async () => {
-    if (!operations.length) return;
+    if (!historyEntries.length) return;
 
     setSaveState({ kind: 'saving', message: 'Undoing last change...' });
     const response = await fetch('/api/edits/undo', {
@@ -205,11 +323,13 @@ export function EditorShell({
       return;
     }
 
-    const removedOperation = (await response.json()) as EditOperationInput;
-    setOperations((prev) => prev.slice(0, -1));
-    setRedoStack((prev) => [...prev, removedOperation]);
+    const removedOperation = normalizeOperationEntry((await response.json()) as OperationRecordLike);
+    const lastHistoryEntry = historyEntries[historyEntries.length - 1] ?? removedOperation;
+
+    setHistoryEntries((prev) => prev.slice(0, -1));
+    setRedoStack((prev) => [...prev, lastHistoryEntry]);
     setSaveState({ kind: 'idle', message: 'Last change moved to redo.' });
-  }, [operations.length, project.id, sequence.id]);
+  }, [historyEntries, project.id, sequence.id]);
 
   const redo = useCallback(async () => {
     const operation = redoStack[redoStack.length - 1];
@@ -217,7 +337,10 @@ export function EditorShell({
 
     setRedoStack((prev) => prev.slice(0, -1));
     try {
-      await persistOperation(operation, { preserveRedoStack: true });
+      await persistOperation(
+        { operationType: operation.operationType, payload: operation.payload, summary: operation.summary } as EditOperationInput,
+        { preserveRedoStack: true }
+      );
       setSaveState({ kind: 'idle', message: 'Restored the undone change.' });
     } catch (error) {
       setSaveState({
@@ -396,7 +519,7 @@ export function EditorShell({
           >
             {saveState.message}
           </span>
-          <button className="btn-ghost" onClick={undo} disabled={operations.length === 0}>
+          <button className="btn-ghost" onClick={undo} disabled={historyEntries.length === 0}>
             Undo
           </button>
           <button className="btn-ghost" onClick={redo} disabled={redoStack.length === 0}>
@@ -524,6 +647,34 @@ export function EditorShell({
               )}
             </div>
           </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Recent edits</p>
+                <p className="mt-1 text-sm text-slate-300">{historyEntries.length} changes in history</p>
+              </div>
+            </div>
+            <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
+              {historyEntries.length ? (
+                [...historyEntries].slice(-6).reverse().map((operation) => (
+                  <div key={operation.id} className="rounded-xl border border-slate-800 bg-slate-900/50 p-3 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-slate-100">{formatOperationLabel(operation)}</p>
+                        <p className="mt-1 text-xs text-slate-500">{formatRelativeTime(operation.created_at)}</p>
+                      </div>
+                      <span className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                        {operation.source ?? 'user'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-xl border border-dashed border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-500">Your last edits will appear here as you work.</p>
+              )}
+            </div>
+          </div>
         </aside>
 
         <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-4">
@@ -598,18 +749,31 @@ export function EditorShell({
           <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3 text-sm">
             <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Recent exports</p>
             <div className="mt-3 max-h-52 space-y-2 overflow-y-auto pr-1">
-              {exports.length ? (
-                exports.map((item) => (
+              {exportItems.length ? (
+                exportItems.map((item) => (
                   <div key={item.id} className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-medium text-slate-100">{item.preset}</p>
-                        <p className="mt-1 text-xs text-slate-500">{item.status.replaceAll('_', ' ')}</p>
+                        <p className="mt-1 text-xs text-slate-500">{formatExportStatus(item.status)}</p>
                       </div>
                       <span className="text-xs text-slate-400">{Math.round((item.progress ?? 0) * 100)}%</span>
                     </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-900">
+                      <div className="h-full rounded-full bg-emerald-400 transition-all" style={{ width: `${Math.round((item.progress ?? 0) * 100)}%` }} />
+                    </div>
                     <p className="mt-2 text-xs text-slate-500">{formatRelativeTime(item.created_at)}</p>
                     {item.error_message ? <p className="mt-2 text-xs text-rose-300">{item.error_message}</p> : null}
+                    <div className="mt-3 flex items-center gap-2 text-xs">
+                      <a className="btn-ghost px-3 py-1.5" href={`/dashboard/projects/${project.id}/exports/${item.id}`}>
+                        Open
+                      </a>
+                      {item.output_url ? (
+                        <a className="btn-ghost px-3 py-1.5" href={item.output_url} target="_blank" rel="noreferrer">
+                          Download
+                        </a>
+                      ) : null}
+                    </div>
                   </div>
                 ))
               ) : (
@@ -624,6 +788,8 @@ export function EditorShell({
               <li>Space to play or pause</li>
               <li>Arrow keys to move 5 seconds</li>
               <li>Home and End to jump to start or finish</li>
+              <li>C to cut or restore the active segment</li>
+              <li>[ and ] to trim around the playhead</li>
             </ul>
           </div>
         </aside>

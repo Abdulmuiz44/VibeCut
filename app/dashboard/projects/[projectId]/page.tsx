@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { UploadPanel } from '@/components/upload/upload-panel';
 import { EditorShell } from '@/components/editor/editor-shell';
@@ -30,68 +31,65 @@ export default async function ProjectEditorPage({ params }: { params: Promise<{ 
   const billingActive = isBillingActive(billing);
 
   return (
-    <main className="page-shell py-6 lg:py-8">
-      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <section className="space-y-6">
+    <main className="page-shell py-8 lg:py-10">
+      <section className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="space-y-6">
           <div className="glass-card p-6">
-            <span className="section-label">Project</span>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{project.title}</h1>
-            <p className="section-copy">
+            <span className="section-label">Project studio</span>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[hsl(var(--foreground))] sm:text-4xl">{project.title}</h1>
+            <p className="mt-4 text-sm leading-7 text-[hsl(var(--muted-foreground))]">
               {isDraft
-                ? 'Upload a source clip to generate the transcript, sequence, and export context.'
-                : 'Review the timeline, adjust the edit, and export the final cut when it is ready.'}
+                ? 'Upload a source clip to generate transcript, sequence, and editing context.'
+                : 'Review the current cut, adjust the timeline, and move to export when the story feels right.'}
             </p>
-            <div className="mt-6 flex flex-wrap gap-2 text-xs text-slate-300">
-              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1">{project.status}</span>
-              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1">{project.active_sequence_id ? 'Sequence ready' : 'Waiting on sequence'}</span>
-              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1">{project.active_transcript_id ? 'Transcript ready' : 'Waiting on transcript'}</span>
+            <div className="mt-5 flex flex-wrap gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+              <span className="rounded-full border border-[hsl(var(--border))] px-3 py-1">{project.status}</span>
+              <span className="rounded-full border border-[hsl(var(--border))] px-3 py-1">{project.active_sequence_id ? 'Sequence ready' : 'Waiting on sequence'}</span>
+              <span className="rounded-full border border-[hsl(var(--border))] px-3 py-1">{project.active_transcript_id ? 'Transcript ready' : 'Waiting on transcript'}</span>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link href="/dashboard" className="btn-ghost">
+                Back to dashboard
+              </Link>
+              <DuplicateProjectButton projectId={project.id} projectTitle={project.title} />
             </div>
           </div>
 
           <div className="surface-card p-5">
-            <p className="section-label">Project details</p>
-            <div className="mt-4 space-y-3 text-sm text-slate-300">
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3">
-                <span className="text-slate-500">Project ID</span>
-                <span className="font-mono text-xs text-slate-200">{project.id}</span>
+            <p className="text-xs uppercase tracking-[0.24em] text-[hsl(var(--muted-foreground))]">Workspace details</p>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.62)] px-4 py-3">
+                <p className="text-[hsl(var(--muted-foreground))]">Project ID</p>
+                <p className="mt-1 break-all font-mono text-xs text-[hsl(var(--foreground))]">{project.id}</p>
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3">
-                <span className="text-slate-500">Mode</span>
-                <span className="text-slate-200">{isDraft ? 'Upload first' : 'Editing'}</span>
+              <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.62)] px-4 py-3">
+                <p className="text-[hsl(var(--muted-foreground))]">Transcript markers</p>
+                <p className="mt-1 text-[hsl(var(--foreground))]">{transcriptRows.length}</p>
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3">
-                <span className="text-slate-500">Transcript markers</span>
-                <span className="text-slate-200">{transcriptSegments?.length ?? 0}</span>
+              <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.62)] px-4 py-3">
+                <p className="text-[hsl(var(--muted-foreground))]">Billing</p>
+                <p className="mt-1 text-[hsl(var(--foreground))]">{billingActive ? 'Subscription active' : 'Billing inactive'}</p>
+                <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{billingPlanLabel(billing)}</p>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <DuplicateProjectButton projectId={project.id} projectTitle={project.title} />
-            </div>
-            <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Billing</p>
-              <p className="mt-2 text-sm text-slate-200">{billingActive ? 'Subscription active' : 'Billing inactive'}</p>
-              <p className="mt-1 text-xs text-slate-400">{billingPlanLabel(billing)}</p>
-              <div className="mt-3">
-                <BillingActions active={billingActive} planLabel={billingPlanLabel(billing)} />
-              </div>
+            <div className="mt-4">
+              <BillingActions active={billingActive} planLabel={billingPlanLabel(billing)} />
             </div>
           </div>
-        </section>
+        </aside>
 
         <section className="min-h-0">
           {isDraft ? (
-            <div className="hero-card h-full">
-              <div className="rounded-[1.5rem] border border-slate-800 bg-[#0b0f14] p-6 lg:p-8">
-                <p className="section-label">Upload</p>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Drop in the source video.</h2>
-                <p className="muted mt-3 max-w-2xl leading-7">
-                  VibeCut will create the transcript and editing context automatically, then bring you straight back here.
-                </p>
-                <UploadPanel projectId={project.id} />
-              </div>
+            <div className="hero-card h-full p-6 sm:p-8">
+              <p className="section-label">Upload source</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[hsl(var(--foreground))]">Drop in the source video to start the edit.</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[hsl(var(--muted-foreground))]">
+                VibeCut will prepare the transcript and sequence automatically, then bring you straight back into the editor.
+              </p>
+              <UploadPanel projectId={project.id} />
             </div>
           ) : sequence ? (
-            <div className="min-h-0 rounded-[2rem] border border-slate-800 bg-slate-950/40 p-3 shadow-2xl shadow-black/20">
+            <div className="min-h-0 rounded-[2rem] border border-[hsl(var(--border))] bg-[hsl(224_32%_7%)]/95 p-3 shadow-2xl shadow-black/20">
               <EditorShell
                 project={project}
                 sequence={sequence}
@@ -102,16 +100,16 @@ export default async function ProjectEditorPage({ params }: { params: Promise<{ 
               />
             </div>
           ) : (
-            <div className="surface-card flex min-h-[420px] flex-col items-start justify-center p-8">
+            <div className="glass-card flex min-h-[420px] flex-col items-start justify-center p-8">
               <p className="section-label">Workspace unavailable</p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">This project has not finished preparing yet.</h2>
-              <p className="section-copy max-w-2xl">
-                The upload may still be processing or the editor context has not been generated yet. Refresh the page in a moment.
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[hsl(var(--foreground))]">This project is still preparing.</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[hsl(var(--muted-foreground))]">
+                The upload may still be processing or the editor context has not been generated yet. Refresh again in a moment.
               </p>
             </div>
           )}
         </section>
-      </div>
+      </section>
     </main>
   );
 }
