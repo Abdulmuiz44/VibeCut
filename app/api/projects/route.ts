@@ -6,7 +6,7 @@ import { requireActiveBilling } from '@/lib/billing/account';
 export async function POST(request: NextRequest) {
   const { supabase, user } = await requireUser();
   const billing = await requireActiveBilling(supabase, user.id);
-  if (!billing.active) {
+  if (billing.account && !billing.active) {
     return NextResponse.json({ error: 'Billing required to create projects', billing_required: true }, { status: 402 });
   }
 
