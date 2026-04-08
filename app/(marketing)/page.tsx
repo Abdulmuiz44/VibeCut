@@ -183,14 +183,43 @@ export default async function MarketingPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          {steps.map(([step, title, description]) => (
-            <div key={step} className="surface-card p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[hsl(var(--muted-foreground))]">{step}</p>
-              <h3 className="mt-5 text-2xl font-semibold tracking-tight text-[hsl(var(--foreground))]">{title}</h3>
-              <p className="mt-4 text-sm leading-7 text-[hsl(var(--muted-foreground))]">{description}</p>
+        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {steps.map(([step, title, description]) => (
+              <div key={step} className="surface-card p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[hsl(var(--muted-foreground))]">{step}</p>
+                <h3 className="mt-5 text-2xl font-semibold tracking-tight text-[hsl(var(--foreground))]">{title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[hsl(var(--muted-foreground))]">{description}</p>
+              </div>
+            ))}
+          </div>
+
+          <aside className="surface-card p-5 sm:p-6" aria-label="Transcript editing preview">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[hsl(var(--muted-foreground))]">UI preview</p>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.7)] px-2 py-1 text-[hsl(var(--muted-foreground))]">
+                  AI suggestion
+                </span>
+                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.7)] px-2 py-1 text-[hsl(var(--muted-foreground))]">Undo</span>
+              </div>
             </div>
-          ))}
+
+            <div className="mt-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.62)] p-3 sm:p-4">
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-xs sm:text-sm">
+                <p className="font-mono text-[hsl(var(--muted-foreground))]">00:14</p>
+                <p className="text-[hsl(var(--muted-foreground))]">We tested six hooks before this one finally landed.</p>
+
+                <p className="font-mono text-[hsl(var(--muted-foreground))]">00:18</p>
+                <p className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--accent))] px-2 py-1 text-[hsl(var(--foreground))]">
+                  <span className="font-medium">Selected cut:</span> tighten this section and keep the payoff line.
+                </p>
+
+                <p className="font-mono text-[hsl(var(--muted-foreground))]">00:24</p>
+                <p className="text-[hsl(var(--muted-foreground))]">Then we export vertical and square in one pass for socials.</p>
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
 
