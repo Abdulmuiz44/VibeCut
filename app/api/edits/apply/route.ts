@@ -18,16 +18,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Sequence not found' }, { status: 404 });
   }
 
-  const { error } = await supabase.from('edit_operations').insert({
-    user_id: user.id,
-    project_id: body.projectId,
-    sequence_id: body.sequenceId,
-    operation_type: parsed.operationType,
-    source: 'user',
-    payload: parsed.payload,
-    summary: parsed.summary ?? null
-  });
+  const { data, error } = await supabase
+    .from('edit_operations')
+    .insert({
+      user_id: user.id,
+      project_id: body.projectId,
+      sequence_id: body.sequenceId,
+      operation_type: parsed.operationType,
+      source: 'user',
+      payload: parsed.payload,
+      summary: parsed.summary ?? null
+    })
+    .select('id,created_at,source,operation_type,payload,summary')
+    .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    operation: data
+      ? {
+          id: data.id,
+          created_at: data.created_at,
+          source: data.source,
+          operationType: data.operation_type,
+          payload: data.payload,
+          summary: data.summary ?? undefined
+        }
+      : null
+  });
 }

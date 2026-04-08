@@ -44,8 +44,8 @@ export function BillingActions({
       <button className="btn-primary inline-flex" onClick={startBillingFlow} disabled={isLoading}>
         {isLoading ? 'Opening...' : active ? 'Manage billing' : 'Subscribe now'}
       </button>
-      {planLabel ? <p className="mt-2 text-xs text-slate-500">Current plan: {planLabel}</p> : null}
-      {message ? <p className="mt-2 text-xs text-rose-300">{message}</p> : null}
+      {planLabel ? <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">Current plan: {planLabel}</p> : null}
+      {message ? <p className="mt-2 text-xs text-rose-500">{message}</p> : null}
     </div>
   );
 }

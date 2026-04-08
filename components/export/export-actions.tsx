@@ -58,16 +58,16 @@ export function ExportActions({
   return (
     <div className="flex flex-wrap gap-3">
       {outputUrl ? (
-        <a className="btn-primary inline-flex" href={outputUrl} target="_blank" rel="noreferrer">
+        <a className="btn-primary" href={outputUrl} target="_blank" rel="noreferrer">
           Download video
         </a>
       ) : null}
       {canRetry ? (
-        <button className="btn-ghost inline-flex" onClick={retryExport} disabled={isRetrying}>
+        <button className="btn-ghost" onClick={retryExport} disabled={isRetrying}>
           {isRetrying ? 'Retrying...' : 'Retry export'}
         </button>
       ) : null}
-      <button className="btn-ghost inline-flex" onClick={reExport} disabled={isReExporting}>
+      <button className="btn-ghost" onClick={reExport} disabled={isReExporting}>
         {isReExporting ? 'Queueing...' : 'Re-export preset'}
       </button>
     </div>

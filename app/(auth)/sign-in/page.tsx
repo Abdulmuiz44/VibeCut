@@ -1,11 +1,11 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { auth, signIn } from '@/auth';
 import { redirect } from 'next/navigation';
 
 const bullets = [
-  'Transcript-first editing built for recurring publishing',
-  'Timeline control with AI suggestions that stay reviewable',
-  'Subscription workflow for creators who publish every week'
+  'Transcript-first review and trim workflow',
+  'Visible edit history and restore points',
+  'Export presets for fast social delivery'
 ];
 
 export default async function SignInPage() {
@@ -16,43 +16,41 @@ export default async function SignInPage() {
   }
 
   return (
-    <main className="page-shell flex min-h-screen items-center py-10 lg:py-16">
-      <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="flex flex-col justify-center gap-6">
-          <span className="section-label">Continue to VibeCut</span>
-          <h1 className="max-w-2xl text-5xl font-semibold tracking-tight text-white sm:text-6xl">
-            Sign in and keep your editing pipeline moving.
-          </h1>
-          <p className="max-w-2xl text-lg leading-8 text-slate-300">
-            VibeCut is the subscription editor for creators who want faster cuts, less friction, and a workflow they can use every week.
-          </p>
+    <main className="page-shell py-10 lg:py-16">
+      <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+        <section className="hero-card spotlight-border flex min-h-[620px] flex-col justify-between p-6 sm:p-8 lg:p-10">
+          <div className="space-y-6">
+            <span className="section-label">Welcome back</span>
+            <div className="space-y-4">
+              <h1 className="max-w-2xl text-5xl font-semibold tracking-[-0.04em] text-[hsl(var(--foreground))] sm:text-6xl">
+                Sign in and keep the editing flow moving.
+              </h1>
+              <p className="max-w-2xl text-base leading-8 text-[hsl(var(--muted-foreground))] sm:text-lg">
+                VibeCut is built for creators who need a polished, repeatable path from source recording to final social cut.
+              </p>
+            </div>
+          </div>
+
           <div className="grid gap-3">
             {bullets.map((bullet) => (
-              <div key={bullet} className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-slate-200">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <div key={bullet} className="rounded-[1.4rem] border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.55)] px-4 py-4 text-sm text-[hsl(var(--foreground))]">
                 {bullet}
               </div>
             ))}
           </div>
-          <div className="funnel-row">
-            <Link href="/" className="btn-ghost">
-              Back home
-            </Link>
-            <Link href="#" className="btn-ghost opacity-50 pointer-events-none">
-              No free plan
-            </Link>
-          </div>
         </section>
 
-        <section className="hero-card flex items-center">
-          <div className="w-full rounded-[1.5rem] border border-slate-800 bg-[#0b0f14] p-8">
-            <p className="section-label">Get started</p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Continue with Google</h2>
-            <p className="muted mt-3 max-w-md leading-7">
-              Use your Google account to unlock the dashboard, create a project, and start editing.
-            </p>
+        <section className="glass-card flex items-center p-6 sm:p-8">
+          <div className="w-full space-y-6">
+            <div>
+              <span className="section-label">Access workspace</span>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[hsl(var(--foreground))]">Continue with Google</h2>
+              <p className="mt-3 text-sm leading-7 text-[hsl(var(--muted-foreground))]">
+                Sign in once, return to your project history, and keep your exports, snapshots, and edits in one place.
+              </p>
+            </div>
+
             <form
-              className="mt-8"
               action={async () => {
                 'use server';
                 await signIn('google', { redirectTo: '/dashboard' });
@@ -62,6 +60,13 @@ export default async function SignInPage() {
                 Continue with Google
               </button>
             </form>
+
+            <div className="page-divider pt-4 text-sm text-[hsl(var(--muted-foreground))]">
+              <p>Need context first?</p>
+              <Link href="/" className="mt-3 btn-ghost w-fit">
+                Back to home
+              </Link>
+            </div>
           </div>
         </section>
       </div>
