@@ -70,7 +70,9 @@ const faqs = [
 export default async function MarketingPage() {
   const session = await auth();
   const primaryHref = session?.user ? '/dashboard' : '/sign-in';
-  const primaryLabel = session?.user ? 'Open workspace' : 'Start with Google';
+  const signedOutPrimaryLabel = 'Start free in 2 minutes';
+  const signedInPrimaryLabel = 'Start your next clip in minutes';
+  const primaryLabel = session?.user ? signedInPrimaryLabel : signedOutPrimaryLabel;
 
   return (
     <main className="pb-24">
@@ -94,7 +96,7 @@ export default async function MarketingPage() {
                 </div>
 
                 <div className="funnel-row">
-                  <Link href={primaryHref} className="btn-primary">
+                  <Link href={primaryHref} className="btn-primary whitespace-nowrap">
                     {primaryLabel}
                   </Link>
                   <Link href="#how-it-works" className="btn-ghost">
@@ -221,7 +223,7 @@ export default async function MarketingPage() {
             <p className="text-sm font-medium text-[hsl(var(--muted-foreground))]">Start the workflow</p>
             <p className="mt-3 text-3xl font-semibold tracking-tight text-[hsl(var(--foreground))]">Open your next edit faster.</p>
             <div className="mt-6 space-y-3">
-              <Link href={primaryHref} className="btn-primary w-full justify-center">
+              <Link href={primaryHref} className="btn-primary w-full justify-center whitespace-nowrap">
                 {primaryLabel}
               </Link>
               <Link href="/dashboard/projects/new" className="btn-ghost w-full justify-center">
@@ -264,7 +266,7 @@ export default async function MarketingPage() {
           </div>
 
           <div className="funnel-row">
-            <Link href={primaryHref} className="btn-primary">
+            <Link href={primaryHref} className="btn-primary whitespace-nowrap">
               {primaryLabel}
             </Link>
             <Link href="#faq" className="btn-ghost">
