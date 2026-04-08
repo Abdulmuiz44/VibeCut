@@ -71,6 +71,7 @@ export default async function MarketingPage() {
   const session = await auth();
   const primaryHref = session?.user ? '/dashboard' : '/sign-in';
   const primaryLabel = session?.user ? 'Open workspace' : 'Start with Google';
+  const riskReducer = 'No credit card required. Keep your current editor. Cancel anytime.';
 
   return (
     <main className="pb-24">
@@ -101,6 +102,7 @@ export default async function MarketingPage() {
                     See how it works
                   </Link>
                 </div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] sm:whitespace-nowrap">{riskReducer}</p>
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   {audience.map((item) => (
@@ -228,6 +230,7 @@ export default async function MarketingPage() {
                 Create a project
               </Link>
             </div>
+            <p className="mt-3 text-xs text-[hsl(var(--muted-foreground))] sm:whitespace-nowrap">{riskReducer}</p>
             <p className="mt-4 text-xs leading-6 text-[hsl(var(--muted-foreground))]">
               Sign in with Google, create the project, upload the source, and move directly into the editor.
             </p>
@@ -263,13 +266,16 @@ export default async function MarketingPage() {
             </p>
           </div>
 
-          <div className="funnel-row">
-            <Link href={primaryHref} className="btn-primary">
-              {primaryLabel}
-            </Link>
-            <Link href="#faq" className="btn-ghost">
-              Read FAQ
-            </Link>
+          <div>
+            <div className="funnel-row">
+              <Link href={primaryHref} className="btn-primary">
+                {primaryLabel}
+              </Link>
+              <Link href="#faq" className="btn-ghost">
+                Read FAQ
+              </Link>
+            </div>
+            <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))] sm:whitespace-nowrap">{riskReducer}</p>
           </div>
         </div>
       </section>
