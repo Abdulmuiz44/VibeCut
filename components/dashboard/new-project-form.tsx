@@ -25,7 +25,13 @@ export function NewProjectForm() {
           });
 
           if (!response.ok) {
-            setError('Unable to create project');
+            const payload = await response.json().catch(() => null);
+            if (response.status === 402 || payload?.billing_required) {
+              setError('Your billing plan is inactive. Update billing to create a project.');
+              return;
+            }
+
+            setError(payload?.error ?? 'Unable to create project');
             return;
           }
 
