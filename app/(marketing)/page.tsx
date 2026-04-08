@@ -39,6 +39,8 @@ const steps = [
   ['03', 'Export the final cut', 'Render vertical, square, or landscape formats for the channel you are publishing to.']
 ] as const;
 
+const usedBy = ['Podcast creators', 'Educators', 'Marketing teams', 'Agencies', 'Solo operators'];
+
 const bullets = [
   'Transcript-backed timeline editing',
   'Restore points before risky changes',
@@ -145,6 +147,20 @@ export default async function MarketingPage() {
                     <p className="text-sm text-[hsl(var(--muted-foreground))]">Output</p>
                     <p className="mt-2 font-medium text-[hsl(var(--foreground))]">Social export presets</p>
                   </div>
+                </div>
+              </div>
+
+              <div className="surface-card p-5">
+                <p className="section-label">Used by teams shipping every week</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {usedBy.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.62)] px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))]"
+                    >
+                      {item}
+                    </span>
+                  ))}
                 </div>
               </div>
 
