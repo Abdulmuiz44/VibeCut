@@ -1,11 +1,46 @@
+'use client';
+
 import Link from 'next/link';
-import { auth } from '@/auth';
+import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
-export async function SiteHeader() {
-  const session = await auth();
-  const primaryHref = session?.user ? '/dashboard' : '/sign-in';
-  const primaryLabel = session?.user ? 'Open workspace' : 'Sign in';
+export function SiteHeader({ signedIn = false }: { signedIn?: boolean }) {
+  const pathname = usePathname();
+  const isHome = pathname === '/';
+
+  if (isHome) {
+    return (
+      <header className="sticky top-0 z-50 bg-[hsl(var(--background)/0.88)] backdrop-blur-xl">
+        <div className="page-shell flex h-20 items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold text-[hsl(var(--foreground))]">
+              VC
+            </span>
+            <span className="text-2xl font-semibold tracking-tight text-[hsl(var(--foreground))]">VibeCut</span>
+          </Link>
+
+          <nav className="hidden items-center gap-8 text-lg text-[hsl(var(--foreground))] md:flex">
+            <Link href="/#features" className="transition hover:opacity-70">
+              Features
+            </Link>
+            <Link href="/#pricing" className="transition hover:opacity-70">
+              Pricing
+            </Link>
+            <Link href="/#testimonials" className="transition hover:opacity-70">
+              Testimonials
+            </Link>
+          </nav>
+
+          <Link href={signedIn ? '/dashboard' : '/#cta'} className="rounded-full bg-[#ffd33d] px-8 py-4 text-xl font-medium text-black transition hover:brightness-95">
+            Download
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
+  const primaryHref = signedIn ? '/dashboard' : '/sign-in';
+  const primaryLabel = signedIn ? 'Open workspace' : 'Sign in';
 
   return (
     <header className="sticky top-0 z-50 border-b border-[hsl(var(--border))] bg-[hsl(var(--background)/0.72)] backdrop-blur-xl">
