@@ -18,6 +18,7 @@ export type TimelineEditorProps = {
   isPlaying: boolean;
   sequenceSegments: SequenceSegment[];
   transcriptSegments: TimelineTranscriptSegment[];
+  currentSequenceSegmentId?: string | null;
   currentTranscriptSegmentId?: string | null;
   onSeekFrame: (frame: number) => void;
   onTogglePlayback: () => void;
@@ -30,6 +31,10 @@ type TrimState = {
   segmentId: string;
   trimSide: 'start' | 'end';
   previewMs: number;
+};
+
+type ScrubState = {
+  active: boolean;
 };
 
 function formatTimecode(ms: number) {
@@ -70,6 +75,7 @@ export function TimelineEditor({
   isPlaying,
   sequenceSegments,
   transcriptSegments,
+  currentSequenceSegmentId,
   currentTranscriptSegmentId,
   onSeekFrame,
   onTogglePlayback,
@@ -79,6 +85,7 @@ export function TimelineEditor({
 }: TimelineEditorProps) {
   const railRef = useRef<HTMLDivElement>(null);
   const [activeTrim, setActiveTrim] = useState<TrimState | null>(null);
+  const [scrubState, setScrubState] = useState<ScrubState | null>(null);
   const durationMs = Math.max(1, Math.round((durationInFrames / fps) * 1000));
   const currentTimeMs = Math.round((currentFrame / fps) * 1000);
   const progress = Math.min(100, Math.max(0, (currentFrame / durationInFrames) * 100));
@@ -116,6 +123,14 @@ export function TimelineEditor({
     return Math.round(ratio * durationMs);
   }, [durationMs]);
 
+  const seekFromClientX = useCallback(
+    (clientX: number) => {
+      const nextTimeMs = msFromClientX(clientX);
+      onSeekFrame(Math.round((nextTimeMs / 1000) * fps));
+    },
+    [fps, msFromClientX, onSeekFrame]
+  );
+
   const beginTrim = (segmentId: string, trimSide: 'start' | 'end', event: ReactPointerEvent<HTMLButtonElement>, initialMs: number) => {
     event.preventDefault();
     event.stopPropagation();
@@ -145,6 +160,43 @@ export function TimelineEditor({
       window.removeEventListener('pointermove', moveHandler);
     };
   }, [activeTrim, msFromClientX, onTrimSegment]);
+
+  useEffect(() => {
+    if (!scrubState?.active) return;
+
+    const moveHandler = (event: PointerEvent) => {
+      seekFromClientX(event.clientX);
+    };
+
+    const upHandler = () => {
+      setScrubState(null);
+    };
+
+    window.addEventListener('pointermove', moveHandler);
+    window.addEventListener('pointerup', upHandler, { once: true });
+
+    return () => {
+      window.removeEventListener('pointermove', moveHandler);
+    };
+  }, [scrubState, seekFromClientX]);
+
+  const stripFrames = useMemo(() => {
+    const source = timelineCues.length ? timelineCues : sequenceSegments.map((segment) => ({ id: segment.id, cueText: segment.id, start_ms: segment.start_ms, end_ms: segment.end_ms }));
+    const totalFrames = Math.min(10, Math.max(4, source.length));
+
+    return Array.from({ length: totalFrames }).map((_, index) => {
+      const cue = source[Math.min(source.length - 1, Math.floor((index / totalFrames) * source.length))];
+      const tone = 20 + ((hashString(`${cue.id}:${index}`) % 5) * 6);
+
+      return {
+        id: `${cue.id}-${index}`,
+        label: compactText(cue.cueText),
+        time: formatTimecode(cue.start_ms),
+        tone,
+        start_ms: cue.start_ms
+      };
+    });
+  }, [sequenceSegments, timelineCues]);
 
   return (
     <div className="glass-card flex min-h-0 flex-col gap-4 p-4">
@@ -198,6 +250,30 @@ export function TimelineEditor({
           <span>Timeline cues</span>
           <span>Waveform and segment hints</span>
         </div>
+        <div className="mb-4 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80 p-2">
+          <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            <span>Thumbnail strip</span>
+            <span>{stripFrames.length} frames</span>
+          </div>
+          <div className="grid gap-2 md:grid-cols-5">
+            {stripFrames.map((frame) => (
+              <button
+                key={frame.id}
+                type="button"
+                className="group overflow-hidden rounded-lg border border-slate-800 bg-slate-900/70 text-left transition hover:border-emerald-400/40"
+                onClick={() => onSeekFrame(Math.round((frame.start_ms / 1000) * fps))}
+              >
+                <div
+                  className="flex h-20 items-end justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-3"
+                  style={{ backgroundColor: `rgba(${frame.tone}, ${frame.tone + 6}, ${frame.tone + 12}, 0.18)` }}
+                >
+                  <span className="max-w-[70%] truncate text-xs font-medium text-slate-100">{frame.label}</span>
+                  <span className="text-[10px] text-slate-400">{frame.time}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="mb-4 grid gap-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/70 p-2 md:grid-cols-4">
           {timelineCues.slice(0, 4).map((cue) => (
             <button
@@ -238,8 +314,26 @@ export function TimelineEditor({
         <div
           ref={railRef}
           className="relative h-20 overflow-hidden rounded-xl border border-slate-800 bg-[linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_100%]"
+          onPointerDown={(event) => {
+            const target = event.target as HTMLElement | null;
+            if (target?.closest('button')) return;
+            seekFromClientX(event.clientX);
+            setScrubState({ active: true });
+          }}
         >
           <div className="absolute inset-x-0 top-1/2 h-px bg-slate-800" />
+          <div className="absolute inset-x-0 top-2 flex items-center gap-1 px-2">
+            {transcriptSegments.slice(0, 24).map((segment) => (
+              <span
+                key={segment.id}
+                className={[
+                  'h-1.5 rounded-full transition',
+                  segment.id === currentTranscriptSegmentId ? 'bg-emerald-300' : 'bg-slate-600/80'
+                ].join(' ')}
+                style={{ width: `${Math.max(6, ((segment.end_ms - segment.start_ms) / durationMs) * 100)}%` }}
+              />
+            ))}
+          </div>
           <div className="absolute bottom-2 left-0 h-8 border-l border-emerald-400/70" style={{ left: `${progress}%` }} />
           <div className="absolute inset-0 flex">
             {sequenceSegments.map((segment) => {
@@ -247,7 +341,7 @@ export function TimelineEditor({
               const segmentEnd = Math.max(segmentStart + 1, segment.end_ms);
               const width = Math.max(3, ((segmentEnd - segmentStart) / durationMs) * 100);
               const left = (segmentStart / durationMs) * 100;
-              const isActive = currentTimeMs >= segmentStart && currentTimeMs <= segmentEnd;
+              const isActive = segment.id === currentSequenceSegmentId || (currentTimeMs >= segmentStart && currentTimeMs <= segmentEnd);
               const isIncluded = segment.include_in_export !== false;
               const isTrimmed = trimPreview?.segmentId === segment.id;
 
@@ -336,7 +430,13 @@ export function TimelineEditor({
           <p className="muted mt-1">Cut or restore directly from the timeline map.</p>
           <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
             {sequenceSegments.map((segment) => (
-              <div key={segment.id} className="rounded-xl border border-slate-800 bg-slate-900/50 p-3 text-sm">
+              <div
+                key={segment.id}
+                className={[
+                  'rounded-xl border p-3 text-sm transition',
+                  segment.id === currentSequenceSegmentId ? 'border-emerald-400/50 bg-emerald-500/10' : 'border-slate-800 bg-slate-900/50'
+                ].join(' ')}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium text-slate-100">{segment.include_in_export !== false ? 'Included' : 'Hidden'}</p>

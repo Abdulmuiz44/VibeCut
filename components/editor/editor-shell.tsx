@@ -714,6 +714,7 @@ export function EditorShell({
             isPlaying={isPlaying}
             sequenceSegments={currentSegments}
             transcriptSegments={transcriptSegments}
+            currentSequenceSegmentId={currentSequenceSegment?.id ?? null}
             currentTranscriptSegmentId={currentTranscriptSegment?.id ?? null}
             onSeekFrame={seekToFrame}
             onTogglePlayback={togglePlayback}
