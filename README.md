@@ -14,6 +14,7 @@ VibeCut is a browser-based AI vibe video editor for talking-head and social cont
 1. `pnpm install`
 2. Copy `.env.example` -> `.env.local`
    - Ensure `AUTH_TRUST_HOST=true` for proxy/hosted platforms (e.g. Netlify) to avoid NextAuth host validation errors.
+   - `NEXT_PUBLIC_APP_URL` is not used by auth in this repo. For Google OAuth on hosted environments, set `AUTH_URL` (or `NEXTAUTH_URL`) to your public site URL.
 3. Create Supabase project and run migration in `supabase/migrations/202603160001_init.sql`
 4. Configure auth redirect URL to `http://localhost:3000/dashboard`
    - For Google OAuth callback, also add `http://localhost:3000/api/auth/callback/google` (and your production domain equivalent, e.g. `https://your-domain/api/auth/callback/google`).
@@ -47,6 +48,14 @@ pnpm test:e2e
 3. Point Inngest Cloud to `/api/inngest`.
 4. Run Supabase migration in production project.
 5. Configure storage buckets as private.
+
+## Google OAuth troubleshooting (Netlify)
+- `.env.local` is only read in local development. On Netlify, set environment variables in **Site settings → Environment variables** and redeploy.
+- Set `AUTH_URL` (or `NEXTAUTH_URL`) to your exact public site origin (for example, `https://your-site.netlify.app`).
+- In Google Cloud Console (OAuth client), add the exact callback URL:
+  - `https://your-site.netlify.app/api/auth/callback/google`
+- If you use a custom domain and Netlify subdomain, add both callback URLs (or use separate OAuth clients per environment).
+- If OAuth consent screen is in **Testing**, your Google account must be listed in test users or Google will block access.
 
 ## Known MVP limitations
 - Local renderer adapter is currently a placeholder wrapper for `renderMedia` integration in your infra runtime.

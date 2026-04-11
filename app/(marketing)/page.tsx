@@ -69,6 +69,21 @@ const testimonials = [
     quote:
       'The AI suggestions are useful because they stay reviewable. The product feels fast without feeling risky.'
   }
+const steps = [
+  ['01', 'Upload the source', 'Bring in a long-form recording and let VibeCut generate the transcript and edit context.'],
+  ['02', 'Trim by transcript', 'Cut weak beats, remove dead air, and tighten pacing while seeing the story clearly.'],
+  ['03', 'Export the final cut', 'Render vertical, square, or landscape formats for the channel you are publishing to.']
+] as const;
+
+const usedBy = ['Podcast creators', 'Educators', 'Marketing teams', 'Agencies', 'Solo operators'];
+
+const bullets = [
+  'Transcript-backed timeline editing',
+  'Restore points before risky changes',
+  'Export presets for social formats',
+  'Project duplication for repeat workflows',
+  'AI suggestions with visible history',
+  'Built for repeat publishing, not one-off edits'
 ];
 
 const faqs = [
@@ -113,6 +128,8 @@ function StoreButton({ eyebrow, label, href }: { eyebrow: string; label: string;
 export default async function MarketingPage() {
   const session = await auth();
   const primaryHref = session?.user ? '/dashboard' : '/sign-in';
+  const primaryLabel = session?.user ? 'Open workspace' : 'Start with Google';
+  const riskReducer = 'No credit card required. Keep your current editor. Cancel anytime.';
 
   return (
     <main className="bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.02),transparent_22%)] pb-24">
@@ -134,6 +151,15 @@ export default async function MarketingPage() {
           </div>
         </div>
       </section>
+                <div className="funnel-row">
+                  <Link href={primaryHref} className="btn-primary whitespace-nowrap">
+                    {primaryLabel}
+                  </Link>
+                  <Link href="#how-it-works" className="btn-ghost">
+                    See how it works
+                  </Link>
+                </div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] sm:whitespace-nowrap">{riskReducer}</p>
 
       <section className="page-shell py-10 text-center">
         <p className="text-xl text-[hsl(var(--muted-foreground))]">Trusted by creators building weekly publishing systems</p>
@@ -193,6 +219,29 @@ export default async function MarketingPage() {
                   <div className="rounded-2xl bg-white p-4 shadow-sm">
                     <div className="h-3 rounded-full bg-[#f1f1f1]">
                       <div className="h-3 w-3/4 rounded-full bg-[#ffd33d]" />
+                </div>
+              </div>
+
+              <div className="surface-card p-5">
+                <p className="section-label">Used by teams shipping every week</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {usedBy.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.62)] px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))]"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-card p-6">
+                <p className="section-label">What you get</p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {bullets.map((item) => (
+                    <div key={item} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.56)] px-4 py-3 text-sm text-[hsl(var(--foreground))]">
+                      {item}
                     </div>
                     <p className="mt-3 text-sm text-[hsl(var(--muted-foreground))]">Workflow progress stays visible and simple.</p>
                   </div>
@@ -228,8 +277,43 @@ export default async function MarketingPage() {
               <Link href={primaryHref} className={`mt-8 inline-flex w-full justify-center rounded-full px-6 py-4 text-lg font-medium ${plan.featured ? 'bg-[#ffd33d] text-black' : 'bg-black text-white'}`}>
                 Get started
               </Link>
+        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {steps.map(([step, title, description]) => (
+              <div key={step} className="surface-card p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[hsl(var(--muted-foreground))]">{step}</p>
+                <h3 className="mt-5 text-2xl font-semibold tracking-tight text-[hsl(var(--foreground))]">{title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[hsl(var(--muted-foreground))]">{description}</p>
+              </div>
+            ))}
+          </div>
+
+          <aside className="surface-card p-5 sm:p-6" aria-label="Transcript editing preview">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[hsl(var(--muted-foreground))]">UI preview</p>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.7)] px-2 py-1 text-[hsl(var(--muted-foreground))]">
+                  AI suggestion
+                </span>
+                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.7)] px-2 py-1 text-[hsl(var(--muted-foreground))]">Undo</span>
+              </div>
             </div>
-          ))}
+
+            <div className="mt-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.62)] p-3 sm:p-4">
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-xs sm:text-sm">
+                <p className="font-mono text-[hsl(var(--muted-foreground))]">00:14</p>
+                <p className="text-[hsl(var(--muted-foreground))]">We tested six hooks before this one finally landed.</p>
+
+                <p className="font-mono text-[hsl(var(--muted-foreground))]">00:18</p>
+                <p className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--accent))] px-2 py-1 text-[hsl(var(--foreground))]">
+                  <span className="font-medium">Selected cut:</span> tighten this section and keep the payoff line.
+                </p>
+
+                <p className="font-mono text-[hsl(var(--muted-foreground))]">00:24</p>
+                <p className="text-[hsl(var(--muted-foreground))]">Then we export vertical and square in one pass for socials.</p>
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -271,6 +355,22 @@ export default async function MarketingPage() {
                 <p className="mt-3 text-base leading-8 text-[hsl(var(--muted-foreground))]">{faq.answer}</p>
               </div>
             ))}
+
+          <div className="rounded-[1.6rem] border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.72)] p-6">
+            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))]">Start the workflow</p>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-[hsl(var(--foreground))]">Open your next edit faster.</p>
+            <div className="mt-6 space-y-3">
+              <Link href={primaryHref} className="btn-primary w-full justify-center whitespace-nowrap">
+                {primaryLabel}
+              </Link>
+              <Link href="/dashboard/projects/new" className="btn-ghost w-full justify-center">
+                Create a project
+              </Link>
+            </div>
+            <p className="mt-3 text-xs text-[hsl(var(--muted-foreground))] sm:whitespace-nowrap">{riskReducer}</p>
+            <p className="mt-4 text-xs leading-6 text-[hsl(var(--muted-foreground))]">
+              Sign in with Google, create the project, upload the source, and move directly into the editor.
+            </p>
           </div>
         </div>
       </section>
@@ -297,6 +397,28 @@ export default async function MarketingPage() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <StoreButton eyebrow="Start with" label="Google Sign In" href={primaryHref} />
             <StoreButton eyebrow="See the" label="Pricing" href="#pricing" />
+      <section className="page-shell page-section pt-0">
+        <div className="hero-card spotlight-border flex flex-col items-start gap-6 p-6 sm:p-8 lg:flex-row lg:items-end lg:justify-between lg:p-10">
+          <div>
+            <span className="section-label">Final CTA</span>
+            <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-[hsl(var(--foreground))] sm:text-4xl">
+              Stop losing time in the timeline. Start editing from the story.
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-[hsl(var(--muted-foreground))]">
+              VibeCut is built to help recurring creators cut faster, revise safely, and publish more consistently.
+            </p>
+          </div>
+
+          <div>
+            <div className="funnel-row">
+              <Link href={primaryHref} className="btn-primary">
+                {primaryLabel}
+              </Link>
+              <Link href="#faq" className="btn-ghost">
+                Read FAQ
+              </Link>
+            </div>
+            <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))] sm:whitespace-nowrap">{riskReducer}</p>
           </div>
         </div>
       </section>
